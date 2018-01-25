@@ -1,0 +1,182 @@
+// 1. Create a collection named orders.
+
+> db.createCollection('orders')
+{ "ok" : 1 }
+> show collections
+orders
+
+// 2. Insert at least 3 documents that represent an order. IMPORTANT: See section below for fields. 
+      Order dates should be: 2017-02-03, 2017-04-04, 2017-01-02.
+
+> orders.insert({orderDate: new Date('2017-02-03'), orderTotal: 1700, lineItems: [{unitPrice: 340, quantity: 5, productName: 'Large Sprockets'}]})
+WriteResult({ "nInserted" : 1 })
+> orders.insert({orderDate: new Date('2017-04-04'), orderTotal: 2580, lineItems: [{unitPrice: 129, quantity: 20, productName: 'Small Sprockets'}]})
+WriteResult({ "nInserted" : 1 })
+> orders.insert({orderDate: new Date('2017-01-02'), orderTotal: 290, lineItems: [{unitPrice: 36.25, quantity: 8, productNa
+me: 'Tiny Gadget'}]})
+WriteResult({ "nInserted" : 1 })
+
+// 3. Find all orders and make them look pretty.
+
+> orders.find().pretty()
+{
+        "_id" : ObjectId("5a69030024fe53119828642d"),
+        "orderDate" : ISODate("2017-02-03T00:00:00Z"),
+        "orderTotal" : 1700,
+        "lineItems" : [
+                {
+                        "unitPrice" : 340,
+                        "quantity" : 5,
+                        "productName" : "Large Sprockets"
+                }
+        ]
+}
+{
+        "_id" : ObjectId("5a69035b24fe53119828642e"),
+        "orderDate" : ISODate("2017-04-04T00:00:00Z"),
+        "orderTotal" : 2580,
+        "lineItems" : [
+                {
+                        "unitPrice" : 129,
+                        "quantity" : 20,
+                        "productName" : "Small Sprockets"
+                }
+        ]
+}
+{
+        "_id" : ObjectId("5a6903b224fe53119828642f"),
+        "orderDate" : ISODate("2017-01-02T00:00:00Z"),
+        "orderTotal" : 290,
+        "lineItems" : [
+                {
+                        "unitPrice" : 36.25,
+                        "quantity" : 8,
+                        "productName" : "Tiny Gadget"
+                }
+        ]
+}
+
+// 4. Find all orders with an orderDate that is after 1/31/2017.
+
+> orders.find({orderDate: {$gt: new Date ('2017-01-31')}}).pretty()
+{
+        "_id" : ObjectId("5a69030024fe53119828642d"),
+        "orderDate" : ISODate("2017-02-03T00:00:00Z"),
+        "orderTotal" : 1700,
+        "lineItems" : [
+                {
+                        "unitPrice" : 340,
+                        "quantity" : 5,
+                        "productName" : "Large Sprockets"
+                }
+        ]
+}
+{
+        "_id" : ObjectId("5a69035b24fe53119828642e"),
+        "orderDate" : ISODate("2017-04-04T00:00:00Z"),
+        "orderTotal" : 2580,
+        "lineItems" : [
+                {
+                        "unitPrice" : 129,
+                        "quantity" : 20,
+                        "productName" : "Small Sprockets"
+                }
+        ]
+}
+
+// 5. Change the orderTotal from 2/3/2017 to 63 dollars (you do NOT have to ensure the lineItems' 
+      unitPrice * quantity add up to the orderTotal)
+
+> orders.find({orderDate: new Date ('2017-02-03')})
+{ "_id" : ObjectId("5a69030024fe53119828642d"), "orderDate" : ISODate("2017-02-03T00:00:00Z"), "orderTotal" : 1700, "lineItems" : [ { "unitPrice" : 340, "quantity" : 5, "productName" : "Large Sprockets" } ] }
+> orders.update({orderDate: new Date ('2017-02-03')}, {$set: {'orderTotal': 63}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> orders.find({orderDate: new Date ('2017-02-03')}).pretty()
+{
+        "_id" : ObjectId("5a69030024fe53119828642d"),
+        "orderDate" : ISODate("2017-02-03T00:00:00Z"),
+        "orderTotal" : 63,
+        "lineItems" : [
+                {
+                        "unitPrice" : 340,
+                        "quantity" : 5,
+                        "productName" : "Large Sprockets"
+                }
+        ]
+}
+
+// 6. Add another lineItem to the order from 4/4/2017
+
+> orders.update({orderDate: new Date('2017-04-04')}, {$push: {lineItems: {unitPrice: 13, quantity: 1, productName: 'Little widget'}}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+
+> orders.find({orderDate: new Date('2017-04-04')}).pretty()
+{
+        "_id" : ObjectId("5a69035b24fe53119828642e"),
+        "orderDate" : ISODate("2017-04-04T00:00:00Z"),
+        "orderTotal" : 2580,
+        "lineItems" : [
+                {
+                        "unitPrice" : 340,
+                        "quantity" : 5,
+                        "productName" : "Large Sprockets"
+                },
+                {
+                        "unitPrice" : 13,
+                        "quantity" : 1,
+                        "productName" : "Little widget"
+                }
+        ]
+}
+
+// 7. Change the first lineItem in the order from 1/2/2017 to be for 2 'transistor radio's
+
+> orders.update({orderDate: new Date ('2017-01-02')}, {$set: {'lineItems.0.productName': 'transistor radio', 'lineItems.0.quantity': 2}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> orders.find({orderDate: new Date ('2017-01-02')}).pretty()
+{
+        "_id" : ObjectId("5a6903b224fe53119828642f"),
+        "orderDate" : ISODate("2017-01-02T00:00:00Z"),
+        "orderTotal" : 290,
+        "lineItems" : [
+                {
+                        "unitPrice" : 36.25,
+                        "quantity" : 2,
+                        "productName" : "transistor radio"
+                }
+        ]
+}
+
+// 8. Find orders with lineItems that have a quantity that is less than 10, but greater than 2. 
+      You will have to research $elemMatch
+
+> orders.find({lineItems: {$elemMatch: {quantity: {$lt: 10, $gt: 2}}}}).pretty()
+{
+        "_id" : ObjectId("5a69030024fe53119828642d"),
+        "orderDate" : ISODate("2017-02-03T00:00:00Z"),
+        "orderTotal" : 63,
+        "lineItems" : [
+                {
+                        "unitPrice" : 340,
+                        "quantity" : 5,
+                        "productName" : "Large Sprockets"
+                }
+        ]
+}
+{
+        "_id" : ObjectId("5a69035b24fe53119828642e"),
+        "orderDate" : ISODate("2017-04-04T00:00:00Z"),
+        "orderTotal" : 2580,
+        "lineItems" : [
+                {
+                        "unitPrice" : 340,
+                        "quantity" : 5,
+                        "productName" : "Large Sprockets"
+                },
+                {
+                        "unitPrice" : 13,
+                        "quantity" : 1,
+                        "productName" : "Little widget"
+                }
+        ]
+}
